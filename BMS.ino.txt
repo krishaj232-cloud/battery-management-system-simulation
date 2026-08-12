@@ -1,0 +1,121 @@
+import numpy as np
+import matplotlib.pyplot as plt
+capacity = 10
+soc = 20
+time = np.linspace(0, 4, 101)
+charging_current = np.where(time <= 2, 2, -2)
+initial_charge = (soc / 100) * capacity
+dt = time[1] - time[0]
+charge_change = charging_current * dt
+charge = initial_charge + np.concatenate(([0], np.cumsum(charge_change[:-1])))
+soc = (charge / capacity) * 100
+resistance = 0.05
+heat_power=(charging_current)**2*resistance
+initial_temperature = 25
+thermal_factor = 2
+cooling_factor = 0.1
+temperature = np.zeros(len(time))
+temperature[0] = initial_temperature
+for i in range(1, len(time)):
+    heat = heat_power[i] * dt
+    cooling = cooling_factor * (temperature[i-1] - initial_temperature)
+    temperature[i] = temperature[i-1] + heat - cooling
+    bms_status = np.where(
+    (soc >= 20) & (temperature <= 40) & (voltage <= 4.2),
+    "NORMAL",
+    "WARNING"
+)
+conditions = [
+    soc < 20,
+    voltage > 4.2,
+    temperature > 40
+]
+choices = [
+    "LOW SOC",
+    "OVER VOLTAGE",
+    "OVER TEMPERATURE"
+]
+bms_status = np.select(
+    conditions,
+    choices,
+    default="NORMAL"
+)
+# Dashboard values
+current_soc = soc[-1]
+current_soh = soh[-1]
+current_voltage = voltage[-1]
+current_temperature = temperature[-1]
+current_status = bms_status[-1]
+# Dashboard bars
+soc_bar = "█" * int(current_soc / 5)
+
+soh_bar = "█" * int(current_soh / 5)
+
+temperature_bar = "█" * int(current_temperature / 5)
+
+voltage_bar = "█" * int(current_voltage / 0.3)
+# BMS Dashboard
+print()
+print("======================================")
+print("          🔋 BMS DASHBOARD")
+print("======================================")
+print(
+    "SOC          :",
+    soc_bar,
+    round(current_soc, 2),
+    "%"
+)
+print(
+    "SOH          :",
+    soh_bar,
+    round(current_soh, 2),
+    "%"
+)
+print(
+    "Temperature  :",
+    temperature_bar,
+    round(current_temperature, 2),
+    "°C"
+)
+print(
+    "Voltage      :",
+    voltage_bar,
+    round(current_voltage, 2),
+    "V"
+)
+print("--------------------------------------")
+print(
+    "STATUS       :",
+    current_status
+)
+print("======================================")
+plt.figure()
+plt.plot(time, temperature)
+plt.xlabel("Time (hours)")
+plt.ylabel("temperature")
+plt.title("temperature vs Time")
+plt.grid(True)
+plt.show()   
+voltage=3.0+(soc/100)*1.2
+plt.figure()
+plt.plot(time, voltage)
+plt.xlabel("Time (hours)")
+plt.ylabel("Voltage (V)")
+plt.title("Battery Voltage vs Time")
+plt.grid(True)
+plt.show()
+plt.plot(time,soc)
+plt.xlabel("time")
+plt.ylabel("soc(%)")
+plt.title("SOC percentage vs Time")
+plt.grid(True)
+plt.show()
+cycles=np.linspace(0,100,101)
+soh=100-(cycles*0.1)
+plt.plot(cycles,soh)
+plt.xlabel("cycles")
+plt.ylabel("soh")
+plt.title("soh vs cycles")
+plt.grid(True)
+plt.show()
+
